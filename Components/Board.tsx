@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, View, StyleSheet, ImageSourcePropType, Alert } from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
 
 interface Props {
     width: number;
@@ -26,23 +27,34 @@ export const calcRequiredPadding = (length: number) => {
     return (length / 2) * (CELL_SIZE + CELL_MARGIN * 2)
 }
 
-const Cell = React.memo((props: { index: number; num: number; revealed: boolean; flag: boolean; onClick: () => void; }) => {
-    return (
-        <View
-            // key={props.index}
-            style={{margin: CELL_MARGIN, flex: 0, width: CELL_SIZE, height: CELL_SIZE }}
-            onTouchEnd={props.onClick}
-        >
-            <StyledImage src={
-                props.revealed ? require("../assets/images/game/tile_revealed.png")
-                            : require("../assets/images/game/tile_hidden.png")
-            } />
-            {props.revealed &&
-                <StyledImage src={require("../assets/images/game/number_5.png")} />
-            }
-        </View>
-    );
-});
+class Cell extends React.Component<{ index: number; value: number; onClick: () => void; }> {
+    shouldComponentUpdate(nextProps: any) {
+        return this.props.value != nextProps.value;
+    }
+
+    render() {
+        const value = this.props.value;
+        const num = value & 15;
+        const revealed = (value & 16) > 0;
+        const flag = (value & 32) > 0;
+
+        return (
+            <View
+                // key={props.index}
+                style={{margin: CELL_MARGIN, flex: 0, width: CELL_SIZE, height: CELL_SIZE }}
+                onTouchEnd={this.props.onClick}
+            >
+                <StyledImage src={
+                    revealed ? require("../assets/images/game/tile_revealed.png")
+                                : require("../assets/images/game/tile_hidden.png")
+                } />
+                {revealed &&
+                    <StyledImage src={require("../assets/images/game/number_5.png")} />
+                }
+            </View>
+        );
+    }
+}
 
 export const Board = (props: Props) => {
     const [board, setBoard] = React.useState<number[]>([]);
@@ -158,22 +170,9 @@ export const Board = (props: Props) => {
         setBoard([...board]);
     }
 
-    const renderRow = (row: number) => {
-        const cells: JSX.Element[] = [];
-        for (let i = 0; i < props.width; i++) {
-            const index = row * props.width + i;
-            const num = getNum(board, index);
-            const revealed = isRevealed(board, index);
-            const flag = hasFlag(board, index);
-            cells.push(
-                <Cell key={index} index={index} num={num} revealed={revealed} flag={flag} onClick={() => test(index)} />
-            );
-        }
-
+    const renderCell = (data: {item: number; index: number}) => {
         return (
-            <View key={row} style={{ flex: 0, flexDirection: "row" }}>
-                {cells}
-            </View>
+            <Cell index={data.index} value={data.item} onClick={() => test(data.index)} />
         );
     }
 
@@ -191,14 +190,16 @@ export const Board = (props: Props) => {
         setFirstClick(true);
     }, [props]);
 
-    const rows: JSX.Element[] = [];
-    for (let i = 0; i < props.height; i++) {
-        rows.push(renderRow(i));
-    }
-
     return (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-            {rows}
+            <FlatList
+                style={{ width: "100%", height: "100%" }}
+                data={board}
+                // horizontal={false}
+                renderItem={renderCell}
+                numColumns={props.width}
+                getItemLayout={(data, index) => ({ length: CELL_SIZE, offset: CELL_SIZE * index, index })}
+            />
         </View>
     );
 }

@@ -21,7 +21,7 @@ const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
                 panBoundaryPadding={calcRequiredPadding(16)}
                 style={{ width: Layout.window.width }}
             >
-                <Board width={30} height={30} mineCount={10} />
+                <Board width={30} height={30} mineCount={30} />
             </ReactNativeZoomableView>
         </View>
     );
