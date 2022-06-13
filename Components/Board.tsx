@@ -1,11 +1,16 @@
 import React from 'react';
-import { Image, View, StyleSheet, ImageSourcePropType, Alert } from 'react-native';
+import { Image, View, StyleSheet, ImageSourcePropType, GestureResponderEvent } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 
 interface Props {
     width: number;
     height: number;
     mineCount: number;
+}
+
+interface State {
+    board: number[];
+    firstClick: boolean;
 }
 
 const CELL_MARGIN = 0;
@@ -23,42 +28,35 @@ const StyledImage = (props: { src: ImageSourcePropType }) => {
     );
 }
 
-export const calcRequiredPadding = (length: number) => {
-    return (length / 2) * (CELL_SIZE + CELL_MARGIN * 2)
-}
+const Cell = React.memo((props: { value: number; onClick: () => void; }) => {
+    const value = props.value;
+    const num = value & 15;
+    const revealed = (value & 16) > 0;
+    const flag = (value & 32) > 0;
 
-class Cell extends React.Component<{ index: number; value: number; onClick: () => void; }> {
-    shouldComponentUpdate(nextProps: any) {
-        return this.props.value != nextProps.value;
-    }
-
-    render() {
-        const value = this.props.value;
-        const num = value & 15;
-        const revealed = (value & 16) > 0;
-        const flag = (value & 32) > 0;
-
-        return (
-            <View
-                // key={props.index}
-                style={{margin: CELL_MARGIN, flex: 0, width: CELL_SIZE, height: CELL_SIZE }}
-                onTouchEnd={this.props.onClick}
-            >
-                <StyledImage src={
-                    revealed ? require("../assets/images/game/tile_revealed.png")
-                                : require("../assets/images/game/tile_hidden.png")
-                } />
-                {revealed &&
-                    <StyledImage src={require("../assets/images/game/number_5.png")} />
-                }
-            </View>
-        );
-    }
-}
+    return (
+        <View
+            style={{margin: CELL_MARGIN, flex: 0, width: CELL_SIZE, height: CELL_SIZE }}
+            onTouchEnd={props.onClick}
+        >
+            <StyledImage src={
+                revealed ? require("../assets/images/game/tile_revealed.png")
+                            : require("../assets/images/game/tile_hidden.png")
+            } />
+            {revealed &&
+                <StyledImage src={require("../assets/images/game/number_5.png")} />
+            }
+        </View>
+    );
+}, (prevProps, nextProps) => {
+    return prevProps.value == nextProps.value;
+});
 
 export const Board = (props: Props) => {
-    const [board, setBoard] = React.useState<number[]>([]);
-    const [firstClick, setFirstClick] = React.useState(true);
+    const [state, setState] = React.useState<State>({
+        board: [],
+        firstClick: true
+    });
 
     const getSurroundingIndices = (index: number) => {
         const indices: number[] = [];
@@ -90,8 +88,6 @@ export const Board = (props: Props) => {
     }
 
     const handleFirstClick = (board: number[], index: number) => {
-        if (!firstClick) return;
-
         const boardLen = props.width * props.height;
         if (isMine(board, index)) { // Move the mine somewhere else
             let i = -1;
@@ -111,9 +107,6 @@ export const Board = (props: Props) => {
             });
             setNum(board, i, mineCount);
         }
-
-        setBoard([...board]);
-        setFirstClick(false);
     }
 
     const isMine = (board: number[], index: number) => {
@@ -159,20 +152,32 @@ export const Board = (props: Props) => {
     const getNum = (board: number[], index: number) => {
         return board[index] & 15;
     }
-
+    
     const setNum = (board: number[], index: number, value: number) => {
         board[index] = value;
     }
 
-    const test = (index: number) => {
-        handleFirstClick(board, index);
-        reveal(board, index);
-        setBoard([...board]);
+    const click = (index: number) => {
+        if (globalThis.clickBlocked > 0) {
+            globalThis.clickBlocked--;
+            return;
+        }
+
+        setState((prevState) => {
+            if (prevState.firstClick) {
+                handleFirstClick(prevState.board, index);
+                prevState.firstClick = false;
+            }
+
+            reveal(prevState.board, index);
+            
+            return { ...prevState };
+        })
     }
 
     const renderCell = (data: {item: number; index: number}) => {
         return (
-            <Cell index={data.index} value={data.item} onClick={() => test(data.index)} />
+            <Cell value={data.item} onClick={() => click(data.index)} />
         );
     }
 
@@ -186,17 +191,25 @@ export const Board = (props: Props) => {
             setMine(newBoard, index);
             minesLeft--;
         }
-        setBoard(newBoard);
-        setFirstClick(true);
-    }, [props]);
+        
+        setState({
+            board: newBoard,
+            firstClick: true
+        });
+    }, [props.width, props.height, props.mineCount]);
 
     return (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+            onMoveShouldSetResponder={() => true}
+            onResponderMove={(e) => console.log(e.nativeEvent.locationX)}
+        >
             <FlatList
-                style={{ width: "100%", height: "100%" }}
-                data={board}
-                // horizontal={false}
+                style={{ width: CELL_SIZE * props.width, minHeight: CELL_SIZE * props.height }}
+                data={state.board}
                 renderItem={renderCell}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
                 numColumns={props.width}
                 getItemLayout={(data, index) => ({ length: CELL_SIZE, offset: CELL_SIZE * index, index })}
             />

@@ -1,9 +1,14 @@
+import React from 'react';
 import { Alert, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Text, View } from '../Components/Themed';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import Layout from '../Constants/Layout';
-import { Board, calcRequiredPadding } from '../Components/Board';
+import { Board } from '../Components/Board';
+
+declare global {
+    var clickBlocked: number;
+}
 
 const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
     return (
@@ -16,12 +21,18 @@ const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
                 zoomStep={0.0}
                 initialZoom={1}
                 movementSensibility={2.0}
-                //bindToBorders={true}
+                bindToBorders={false}
                 visualTouchFeedbackEnabled={false}
-                panBoundaryPadding={calcRequiredPadding(16)}
+                doubleTapDelay={0}
                 style={{ width: Layout.window.width }}
+                onShiftingEnd={() => globalThis.clickBlocked = 1}
+                onZoomAfter={() => globalThis.clickBlocked = 2}
             >
-                <Board width={30} height={30} mineCount={30} />
+                <Board
+                    width={16}
+                    height={16}
+                    mineCount={40}  
+                />
             </ReactNativeZoomableView>
         </View>
     );
