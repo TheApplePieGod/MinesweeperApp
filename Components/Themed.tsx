@@ -37,6 +37,10 @@ export const Text = (props: TextProps) => {
     return <DefaultText style={[{ color }, style]} {...otherProps} />;
 }
 
+export const MonoText = (props: TextProps) => {
+    return <Text {...props} style={[props.style, { fontFamily: 'space-mono' }]} />;
+}  
+
 export const View = (props: ViewProps) => {
     const { style, lightColor, darkColor, ...otherProps } = props;
     const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'background');

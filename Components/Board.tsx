@@ -1,16 +1,14 @@
-import React from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { Image, View, StyleSheet, ImageSourcePropType, GestureResponderEvent } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
+import { BoardState } from '../Screens/MainScreen';
 
 interface Props {
     width: number;
     height: number;
     mineCount: number;
-}
-
-interface State {
-    board: number[];
-    firstClick: boolean;
+    state: BoardState;
+    setState: Dispatch<SetStateAction<BoardState>>;
 }
 
 const CELL_MARGIN = 0;
@@ -34,6 +32,7 @@ const Cell = React.memo((props: { value: number; onClick: () => void; }) => {
     const revealed = (value & 16) > 0;
     const flag = (value & 32) > 0;
 
+    // TODO: text instead of image
     return (
         <View
             style={{margin: CELL_MARGIN, flex: 0, width: CELL_SIZE, height: CELL_SIZE }}
@@ -53,10 +52,7 @@ const Cell = React.memo((props: { value: number; onClick: () => void; }) => {
 });
 
 export const Board = (props: Props) => {
-    const [state, setState] = React.useState<State>({
-        board: [],
-        firstClick: true
-    });
+    const { state, setState } = props;
 
     const getSurroundingIndices = (index: number) => {
         const indices: number[] = [];
@@ -194,7 +190,10 @@ export const Board = (props: Props) => {
         
         setState({
             board: newBoard,
-            firstClick: true
+            flagsLeft: props.mineCount,
+            timeStarted: Date.now(),
+            firstClick: true,
+            flagEnabled: false
         });
     }, [props.width, props.height, props.mineCount]);
 
