@@ -16,7 +16,9 @@ export const GameUI = (props: Props) => {
     const [time, setTime] = React.useState("");
 
     const formatTime = () => {
-        const totalSeconds = Math.floor((Date.now() - state.timeStarted) / 1000.0);
+        if (state.timeStarted == 0) return "00:00";
+        const curTime = state.timeEnded > 0 ? state.timeEnded : Date.now();
+        const totalSeconds = Math.floor((curTime - state.timeStarted) / 1000.0);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
@@ -25,20 +27,20 @@ export const GameUI = (props: Props) => {
     React.useEffect(() => {
         const handle = setInterval(() => setTime(formatTime()), 100);
         return () => clearInterval(handle);
-    }, [state.timeStarted]);
+    }, [state.timeStarted, state.timeEnded]);
 
     return (
         <View style={styles.container}>
-            <MonoText style={styles.text}>{state.flagsLeft.toString().padStart(5, "0")}</MonoText>
-            <TouchableHighlight onPress={() => resetBoard(props.state, props.setState)}>
+            <MonoText style={styles.text}>{Math.max(state.flagsLeft, 0).toString().padStart(5, "0")}</MonoText>
+            <TouchableHighlight onPress={() => resetBoard(state, setState)}>
                 <Image
                     source={require("../assets/images/game/face_happy.png")}
                     style={[
-                        { width: 35, height: 35 }
+                        { width: 30, height: 30 }
                     ]}
                 />
             </TouchableHighlight>
-            <MonoText style={styles.text}>{formatTime()}</MonoText>
+            <MonoText style={styles.text}>{time}</MonoText>
         </View>
     );
 }
@@ -54,7 +56,7 @@ const styles = StyleSheet.create({
     },
     text: {
         color: "red",
-        fontSize: 20,
+        fontSize: 22,
         paddingHorizontal: 10
     }
 });

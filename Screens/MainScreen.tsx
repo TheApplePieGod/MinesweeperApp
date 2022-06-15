@@ -17,6 +17,8 @@ export interface BoardState {
     board: number[];
     flagsLeft: number;
     timeStarted: number;
+    timeEnded: number;
+    win: boolean;
     firstClick: boolean;
     flagEnabled: boolean;
     width: number;
@@ -24,28 +26,34 @@ export interface BoardState {
     mineCount: number;
 }
 
+// TODO: shake to toggle flag?
 const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
     const [boardState, setBoardState] = React.useState<BoardState>({
         board: [],
         flagsLeft: 99,
         timeStarted: 0,
+        timeEnded: 0,
+        win: false,
         firstClick: true,
         flagEnabled: false,
-        width: 16,
+        width: 30,
         height: 16,
-        mineCount: 40
+        mineCount: 99
     });
 
-    const [flagAnim, setFlagAnim] = React.useState(new Animated.Value(1));
+    const [flagAnim, setFlagAnim] = React.useState(new Animated.Value(0.2));
 
     const toggleFlagMode = () => {
+        setBoardState({ ...boardState, flagEnabled: !boardState.flagEnabled });
+    }
+
+    React.useEffect(() => {
         Animated.timing(flagAnim, {
-            toValue: boardState.flagEnabled ? 0.2 : 1,
+            toValue: boardState.flagEnabled ? 1.0 : 0.2,
             duration: 80,
             useNativeDriver: true
         }).start();
-        setBoardState({ ...boardState, flagEnabled: !boardState.flagEnabled });
-    }
+    }, [boardState.flagEnabled])
 
     return (
         <React.Fragment>

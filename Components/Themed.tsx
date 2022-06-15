@@ -38,7 +38,7 @@ export const Text = (props: TextProps) => {
 }
 
 export const MonoText = (props: TextProps) => {
-    return <Text {...props} style={[props.style, { fontFamily: 'space-mono' }]} />;
+    return <Text {...props} style={[props.style, { fontFamily: 'digital-7' }]} />;
 }  
 
 export const View = (props: ViewProps) => {

@@ -43,6 +43,9 @@ const Cell = React.memo((props: { value: number; onClick: () => void; }) => {
                 :
                 <StyledImage src={require("../assets/images/game/tile_hidden.png")} />
             }
+            {flag &&
+                <StyledImage src={require("../assets/images/game/flag.png")} />
+            }
             {(revealed && num > 0 && num < 9) &&
                 <Text style={[styles.cellText, { color: NUM_COLORS[num] }]} >
                     {num}
@@ -98,19 +101,50 @@ const isRevealed = (state: BoardState, index: number) => {
     return (state.board[index] & 16) > 0;
 }
 
-const reveal = (state: BoardState, index: number) => {
-    if (isRevealed(state, index)) return;
+const reveal = (state: BoardState, index: number, fromClick: boolean) => {
+    const currentNum = getNum(state, index);
+
     if (hasFlag(state, index)) return;
+    if (isRevealed(state, index)) {
+        // Reveal surrounding tiles if there are enough flags
+        if (fromClick && currentNum > 0) {
+            const surround = getSurroundingIndices(index, state.width, state.height);
+            let flagCount = 0;
+            surround.forEach((i) => {
+                flagCount += Number(hasFlag(state, i));
+            });
+            if (flagCount == currentNum)
+            surround.forEach((i) => {
+                reveal(state, i, false);
+            });
+        }
+
+        return;
+    }
+
     state.board[index] |= 16;
 
+    if (isMine(state, index)) {
+        state.timeEnded = Date.now();
+        return;
+    }
+
     // Reveal surrounding tiles
-    const currentNum = getNum(state, index);
     if (currentNum == 0) {
         const surround = getSurroundingIndices(index, state.width, state.height);
         surround.forEach((i) => {
-            reveal(state, i);
+            reveal(state, i, false);
         });
     }
+
+    // Check for win (todo: optimize?)
+    for (let i = 0; i < state.board.length; i++) {
+        if (!isRevealed(state, i) && !isMine(state, i))
+            return;
+    }
+
+    state.timeEnded = Date.now();
+    state.win = true;
 }
 
 const hasFlag = (state: BoardState, index: number) => {
@@ -121,8 +155,10 @@ const setFlag = (state: BoardState, index: number) => {
     if (isRevealed(state, index)) return;
     if (hasFlag(state, index)) {
         state.board[index] &= ~32;
+        state.flagsLeft++;
     } else {
         state.board[index] |= 32;
+        state.flagsLeft--;
     }
 }
 
@@ -148,7 +184,8 @@ export const resetBoard = (state: BoardState, setState: Dispatch<SetStateAction<
     setState({
         ...state,
         flagsLeft: state.mineCount,
-        timeStarted: Date.now(),
+        timeStarted: 0,
+        timeEnded: 0,
         firstClick: true,
         flagEnabled: false
     });
@@ -186,12 +223,18 @@ export const Board = (props: Props) => {
         }
 
         setState((prevState) => {
+            if (prevState.timeEnded > 0) return prevState;
+
             if (prevState.firstClick) {
                 handleFirstClick(prevState, index);
+                prevState.timeStarted = Date.now();
                 prevState.firstClick = false;
             }
 
-            reveal(prevState, index);
+            if (prevState.flagEnabled && !isRevealed(prevState, index))
+                setFlag(prevState, index);
+            else
+                reveal(prevState, index, true);
             
             return { ...prevState };
         })
