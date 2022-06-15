@@ -19,6 +19,9 @@ export interface BoardState {
     timeStarted: number;
     firstClick: boolean;
     flagEnabled: boolean;
+    width: number;
+    height: number;
+    mineCount: number;
 }
 
 const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
@@ -27,7 +30,10 @@ const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
         flagsLeft: 99,
         timeStarted: 0,
         firstClick: true,
-        flagEnabled: false
+        flagEnabled: false,
+        width: 16,
+        height: 16,
+        mineCount: 40
     });
 
     const [flagAnim, setFlagAnim] = React.useState(new Animated.Value(1));
@@ -58,9 +64,6 @@ const MainScreen = ({ navigation }: NativeStackScreenProps<any>) => {
                     onZoomAfter={() => globalThis.clickBlocked = 2}
                 >
                     <Board
-                        width={16}
-                        height={16}
-                        mineCount={40}
                         state={boardState}
                         setState={setBoardState}
                     />
@@ -105,6 +108,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        zIndex: 100
         //paddingTop: 5,
     },
     flag: {

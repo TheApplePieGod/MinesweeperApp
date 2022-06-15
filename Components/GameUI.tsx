@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction } from "react";
 import { StyleSheet, View, Image } from "react-native";
 import { TouchableHighlight } from "react-native-gesture-handler";
 import { BoardState } from "../Screens/MainScreen";
+import { resetBoard } from "./Board";
 import { MonoText } from "./Themed";
 
 interface Props {
@@ -20,7 +21,7 @@ export const GameUI = (props: Props) => {
         const seconds = totalSeconds % 60;
         return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
     }
-
+ 
     React.useEffect(() => {
         const handle = setInterval(() => setTime(formatTime()), 100);
         return () => clearInterval(handle);
@@ -29,7 +30,7 @@ export const GameUI = (props: Props) => {
     return (
         <View style={styles.container}>
             <MonoText style={styles.text}>{state.flagsLeft.toString().padStart(5, "0")}</MonoText>
-            <TouchableHighlight onPress={() => {}}>
+            <TouchableHighlight onPress={() => resetBoard(props.state, props.setState)}>
                 <Image
                     source={require("../assets/images/game/face_happy.png")}
                     style={[

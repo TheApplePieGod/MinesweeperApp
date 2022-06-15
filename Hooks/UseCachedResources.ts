@@ -17,20 +17,14 @@ export default function useCachedResources() {
                 await Font.loadAsync({
                     ...FontAwesome.font,
                     'space-mono': require('../assets/fonts/SpaceMono-Regular.ttf'),
+                    'digital-7': require('../assets/fonts/Digital7.ttf'),
+                    'source-code-pro': require('../assets/fonts/SourceCodePro-Bold.ttf'),
                 });
 
                 // Preload hot game images
                 await Promise.all([
                     require("../assets/images/game/flag.png"),
                     require("../assets/images/game/mine.png"),
-                    require("../assets/images/game/number_1.png"),
-                    require("../assets/images/game/number_2.png"),
-                    require("../assets/images/game/number_3.png"),
-                    require("../assets/images/game/number_4.png"),
-                    require("../assets/images/game/number_5.png"),
-                    require("../assets/images/game/number_6.png"),
-                    require("../assets/images/game/number_7.png"),
-                    require("../assets/images/game/number_8.png"),
                     require("../assets/images/game/tile_hidden.png"),
                     require("../assets/images/game/tile_revealed.png"),
                 ].map(i => Asset.fromModule(i).downloadAsync()));
